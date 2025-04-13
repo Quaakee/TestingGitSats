@@ -1,0 +1,4 @@
+- Building TS...
+
+✔ Building TS
+ERROR: outDir 'artifacts' not exists
