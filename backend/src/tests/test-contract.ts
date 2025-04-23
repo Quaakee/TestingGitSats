@@ -1,7 +1,9 @@
 // test-bounty.js
 import { WalletClient, TopicBroadcaster, Utils, PushDrop, Transaction} from '@bsv/sdk';
-import { BountyContract, BountyArtifact } from 'mod.js';
+import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
+import { BountyContract } from '../contracts/BountyContract.js'
 import { bsv, toByteString, PubKey } from 'scrypt-ts'
+BountyContract.loadArtifact(bountyContractJson)
 
 async function createAndBroadcastBounty() {
   try {
@@ -12,9 +14,9 @@ async function createAndBroadcastBounty() {
     const repoOwner = 'bitcoin-sv';
     const repoName = 'bsv-overlay';
     const amount = 20000; // 50,000 satoshis
-    const funderPublicKey = (await wallet.getPublicKey({ identityKey: true })).publicKey;
+    const repoOwnerKey = (await wallet.getPublicKey({ identityKey: true })).publicKey;
     const issueTitle = 'Fix performance in Topic Manager';
-    const issueNumber = 42;
+    const issueNumber = 69;
     const description = 'The topic manager is slow when processing large transactions';
 
     const signature = Utils.toHex(
@@ -28,32 +30,23 @@ async function createAndBroadcastBounty() {
       ).signature
     )
     
-    // Create fields for the pushdrop
-    const fields = [
-      Utils.toArray(repoOwner, 'utf8'),
-      Utils.toArray(repoName, 'utf8'),
-      Utils.toArray(issueNumber.toString(), 'utf8'),
-      Utils.toArray(amount.toString(), 'utf8'),
-      Utils.toArray(funderPublicKey, 'utf8'),
-      Utils.toArray(issueTitle, 'utf8'),
-      Utils.toArray(description, 'utf8')
-    ];
-    
-    const pushdrop = new PushDrop(wallet)
-    const lockingScript = await pushdrop.lock(
-        fields,
-        [2, 'githubbounty'],
-        '1',
-        'anyone',
-        true
+    const bounty = new BountyContract(
+      PubKey(repoOwnerKey),
+      signature,
+      toByteString(repoOwner, false),
+      toByteString(repoName, false),
+      BigInt(issueNumber),
+      toByteString(issueTitle, false),
     )
+
+    const lockingScript = bounty.lockingScript.toHex()
     
     debugger
     
     // Create the transaction
     const { txid, tx } = await wallet.createAction({
       outputs: [{
-        lockingScript: lockingScript.toHex(),
+        lockingScript: lockingScript,
         satoshis: 1000, // Dust limit plus a bit extra
         outputDescription: 'GitHub Bounty'
       }],

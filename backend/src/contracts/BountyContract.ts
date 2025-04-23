@@ -29,12 +29,13 @@ export class BountyContract extends SmartContract {
     @prop(true)
     repoOwnerSig: ByteString
 
+    /*
     @prop(true)
     certServerKey: PubKey
 
     @prop(true)
     certServerSig: ByteString
-
+    */
     // GitHub repository and issue details
     @prop()
     repoOwnerName: ByteString
@@ -47,33 +48,33 @@ export class BountyContract extends SmartContract {
 
     @prop()
     issueTitle: ByteString
-
-    @prop(true)
-    currentBalance: bigint
+    
+    //@prop(true)
+    //currentBalance: bigint
 
 
 
     constructor(
         repoOwnerKey: PubKey,
         repoOwnerSig: ByteString,
-        certServerKey: PubKey,
-        certServerSig: ByteString,
+        //certServerKey: PubKey,
+        //certServerSig: ByteString,
         repoOwnerName: ByteString, 
         repoName: ByteString, 
         issueNumber: bigint,
         issueTitle: ByteString,
-        currentBalance: bigint
+        //currentBalance: bigint
     ) {
         super(...arguments)
         this.repoOwnerKey = repoOwnerKey
         this.repoOwnerSig = repoOwnerSig
-        this.certServerKey = certServerKey
-        this.certServerSig = certServerSig
+        //this.certServerKey = certServerKey
+        //this.certServerSig = certServerSig
         this.repoOwnerName = repoOwnerName
         this.repoName = repoName
         this.issueNumber = issueNumber
         this.issueTitle = issueTitle
-        this.currentBalance = currentBalance
+        //this.currentBalance = currentBalance
     }
 
     /**
@@ -81,15 +82,21 @@ export class BountyContract extends SmartContract {
      */
     @method(SigHash.ALL) 
     public addFunds() {
-
+        /* OLD IMPLEMENTATION
         const addedAmount: bigint = this.ctx.utxo.value
 
         // Accumulate funds
-        this.currentBalance += addedAmount
+        //this.currentBalance += addedAmount
     
-        const newOutput = this.buildStateOutput(this.currentBalance)
-        const outputs = newOutput + this.buildChangeOutput()
+        //const newOutput = this.buildStateOutput(this.currentBalance)
+        const outputs = this.buildChangeOutput()
     
+        assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
+
+        */
+
+        const out = this.buildStateOutput(this.ctx.utxo.value)
+        const outputs = out + this.buildChangeOutput()
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
     }
     /**
@@ -103,7 +110,7 @@ export class BountyContract extends SmartContract {
     @method(SigHash.ANYONECANPAY_ALL)
     public payBounty(
         repoOwnerSig: Sig,
-        certServerSig: Sig,
+        //certServerSig: Sig,
         userPubKey: PubKey,
         amount: bigint
     ) {
@@ -115,10 +122,10 @@ export class BountyContract extends SmartContract {
 
         // 2) Check certificate server signature to verify GitHub identity TODO
         
-        assert(
-            this.checkSig(certServerSig, this.certServerKey),
-            'Certificate server signature invalid'
-        ) 
+        //assert(
+            //this.checkSig(certServerSig, this.certServerKey),
+            //'Certificate server signature invalid'
+        //) 
 
         // 3) Ensure sufficient funds
         assert(amount <= this.ctx.utxo.value, 'Insufficient funds')
@@ -143,7 +150,7 @@ export class BountyContract extends SmartContract {
     /**
      * Allow the repo owner to withdraw funds if needed
      */
-    @method(SigHash.ANYONECANPAY_SINGLE)
+    @method(SigHash.ALL)
     public withdraw(repoOwnerSig: Sig, amount: bigint) {
         // Check signature
         assert(

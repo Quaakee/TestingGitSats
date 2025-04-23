@@ -27,17 +27,18 @@ class BountyLookupService implements LookupService {
       // Decode the pushdrop script to extract bounty details
       const bounty = BountyContract.fromLockingScript(outputScript.toHex()) as BountyContract
 
-      const decodedScript = PushDrop.decode(outputScript)
+      //const decodedScript = PushDrop.decode(outputScript)
       
-      const fields = decodedScript.fields
+      //const fields = decodedScript.fields
 
+      // parse out message fields from smart contract
       const repoOwnerKey = Utils.toHex(Utils.toArray(bounty.repoOwnerKey, 'utf8'))
       const repoOwnerName = Utils.toHex(Utils.toArray(bounty.repoOwnerName, 'utf8'))
       const repoName = Utils.toHex(Utils.toArray(bounty.repoName, 'utf8'))
       const issueNumber = Number(bounty.issueNumber)
+      const issueTitle = Utils.toHex(Utils.toArray(bounty.issueTitle, 'utf8'))
       const amount = Number(bounty.balance)
       const funderPublicKey = Utils.toHex(Utils.toArray(bounty.repoOwnerKey, 'utf8'))
-      const issueTitle = Utils.toHex(Utils.toArray(bounty.issueTitle, 'utf8'))
       const description = `Bounty for ${repoOwnerKey}/${repoName}#${issueNumber}`
       
       // Extract bounty data from pushdrop fields

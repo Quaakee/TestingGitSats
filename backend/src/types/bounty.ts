@@ -24,7 +24,6 @@ export interface BountyRecord {
     repoOwnerName: string
     repoName: string
     issueNumber: number
-    amount: number
     funderPublicKey: string
     txid: string
     outputIndex: number

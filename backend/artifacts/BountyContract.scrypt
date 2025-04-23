@@ -3,45 +3,36 @@ struct __scrypt_ts_Change {  int amount;  Ripemd160 address;}
 contract BountyContract {
   @state PubKey repoOwnerKey;
   @state bytes repoOwnerSig;
-  @state PubKey certServerKey;
-  @state bytes certServerSig;
   bytes repoOwnerName;
   bytes repoName;
   int issueNumber;
   bytes issueTitle;
-  @state int currentBalance;
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(PubKey repoOwnerKey, bytes repoOwnerSig, PubKey certServerKey, bytes certServerSig, bytes repoOwnerName, bytes repoName, int issueNumber, bytes issueTitle, int currentBalance) {
+  constructor(PubKey repoOwnerKey, bytes repoOwnerSig, bytes repoOwnerName, bytes repoName, int issueNumber, bytes issueTitle) {
     this.repoOwnerKey = repoOwnerKey;
     this.repoOwnerSig = repoOwnerSig;
-    this.certServerKey = certServerKey;
-    this.certServerSig = certServerSig;
     this.repoOwnerName = repoOwnerName;
     this.repoName = repoName;
     this.issueNumber = issueNumber;
     this.issueTitle = issueTitle;
-    this.currentBalance = currentBalance;
   }
   public function addFunds(SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
     require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
     this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
     this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
-    int addedAmount = this.__scrypt_ts_ctx_value;
-    this.currentBalance += addedAmount;
-    bytes newOutput = this.buildStateOutput(this.currentBalance);
-    bytes outputs = newOutput + this.buildChangeOutput();
+    bytes out = this.buildStateOutput(this.__scrypt_ts_ctx_value);
+    bytes outputs = out + this.buildChangeOutput();
     require(hash256(outputs) == this.__scrypt_ts_ctx_hashoutputs);
   }
-  public function payBounty(Sig repoOwnerSig, Sig certServerSig, PubKey userPubKey, int amount, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
+  public function payBounty(Sig repoOwnerSig, PubKey userPubKey, int amount, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
     require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'c1')));
     this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
     this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
     require(checkSig(repoOwnerSig, this.repoOwnerKey));
-    require(checkSig(certServerSig, this.certServerKey));
     require(amount <= this.__scrypt_ts_ctx_value);
     Ripemd160 devAddr = hash160(userPubKey);
     bytes outputs = Utils.buildOutput(Utils.buildPublicKeyHashScript(devAddr), amount);

@@ -30,7 +30,8 @@
         "build-test-bounty": "tsc --esModuleInterop backend/tests/test-bounty.ts --outDir dist/tests",
         "run-test-bounty": "node dist/esm/src/tests/test-bounty.js",
         "run-query-bounty": "node dist/esm/src/tests/test-query.js",
-        "test-bounty": "npm run build-test-bounty && npm run run-test-bounty"
+        "test-bounty": "npm run build-test-bounty && npm run run-test-bounty",
+        "test-contract": "node dist/esm/src/tests/test-contract.js"
     },
     "keywords": [
         "github",

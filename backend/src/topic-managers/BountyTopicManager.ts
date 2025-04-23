@@ -34,7 +34,7 @@ export default class BountyTopicManager implements TopicManager {
       for (const [index, output] of outputs.entries()) {
         try {
           // Using pushdrop to decode the script
-          const decodedScript = PushDrop.decode(output.lockingScript)
+          //const decodedScript = PushDrop.decode(output.lockingScript)
 
           const bounty = BountyContract.fromLockingScript(output.lockingScript.toHex()) as BountyContract
 
@@ -51,11 +51,10 @@ export default class BountyTopicManager implements TopicManager {
             throw new Error('Signature invalid')
           }
           // I would add certserversig verification here as well
-          const fields = decodedScript.fields
+          //const fields = decodedScript.fields
           
+          /*
           // Validate expected fields for a bounty
-          if (fields.length < 7) continue
-          
           // 1. Repository owner 
           if (!fields[0] || fields[0].length === 0) continue
           
@@ -78,7 +77,7 @@ export default class BountyTopicManager implements TopicManager {
             //PublicKey.fromString(fields[4].toString('utf8'))
           } catch {
             continue
-          }
+          } */
           
           // Valid bounty format - add to admissible outputs
           admissibleOutputs.push(index)
@@ -88,8 +87,13 @@ export default class BountyTopicManager implements TopicManager {
           continue
         }
       }
+      if (admissibleOutputs.length === 0) {
+        console.warn('No outputs admitted!')
+        // throw new ERR_BAD_REQUEST('No outputs admitted!')
+      }
     } catch (error) {
-      console.error('Topic Manager: Error identifying admissible outputs:', error)
+      const beefStr = JSON.stringify(beef, null, 2)
+      console.error('Topic Manager: Error identifying admissible outputs:', error, " beef: ", beefStr)
     }
 
     return {

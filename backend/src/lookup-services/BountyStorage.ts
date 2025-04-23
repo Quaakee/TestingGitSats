@@ -54,7 +54,6 @@ export class BountyStorage {
         repoOwnerName,
         repoName,
         issueNumber,
-        amount,
         funderPublicKey,
         txid,
         outputIndex,
