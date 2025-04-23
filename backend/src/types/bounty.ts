@@ -1,5 +1,5 @@
 // backend/src/types/bounty.ts
-
+/*
 export interface BountyRecord {
     repoOwner: string           // GitHub repository owner/organization
     repoName: string            // GitHub repository name
@@ -17,17 +17,25 @@ export interface BountyRecord {
     updatedAt: Date             // When the bounty was last updated
     claimTxid?: string          // Transaction ID of the claim (if claimed)
   }
+
+  */
+
+  // Testing interfaces
+  export interface UTXOReference {
+    txid: string
+    outputIndex: number
+  }
   
   // Simplified bounty reference for list views
   export interface BountyReference {
     repoOwnerKey: string
+    repoOwnerSig: string
     repoOwnerName: string
     repoName: string
     issueNumber: number
-    funderPublicKey: string
+    issueTitle: string
     txid: string
     outputIndex: number
-    issueTitle: string
     status: string
     createdAt: Date
     description: string

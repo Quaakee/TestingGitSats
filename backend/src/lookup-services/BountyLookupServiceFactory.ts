@@ -2,7 +2,7 @@ import { LookupService, LookupQuestion, LookupAnswer, LookupFormula } from '@bsv
 import { BountyStorage } from './BountyStorage.js'
 import { Script, Utils, Transaction, PushDrop } from '@bsv/sdk'
 import { Db } from 'mongodb'
-import { BountyRecord, BountyReference, RepoIssueReference } from '../types/bounty.js'
+import { BountyReference, RepoIssueReference } from '../types/bounty.js'
 import { BountyContract } from '../contracts/BountyContract.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 BountyContract.loadArtifact(bountyContractJson)
@@ -33,13 +33,11 @@ class BountyLookupService implements LookupService {
 
       // parse out message fields from smart contract
       const repoOwnerKey = Utils.toHex(Utils.toArray(bounty.repoOwnerKey, 'utf8'))
+      const repoOwnerSig = Utils.toHex(Utils.toArray(bounty.repoOwnerSig, 'utf8'))
       const repoOwnerName = Utils.toHex(Utils.toArray(bounty.repoOwnerName, 'utf8'))
       const repoName = Utils.toHex(Utils.toArray(bounty.repoName, 'utf8'))
       const issueNumber = Number(bounty.issueNumber)
       const issueTitle = Utils.toHex(Utils.toArray(bounty.issueTitle, 'utf8'))
-      const amount = Number(bounty.balance)
-      const funderPublicKey = Utils.toHex(Utils.toArray(bounty.repoOwnerKey, 'utf8'))
-      const description = `Bounty for ${repoOwnerKey}/${repoName}#${issueNumber}`
       
       // Extract bounty data from pushdrop fields
       //const repoOwner = fields[0]?.toString()
@@ -55,17 +53,16 @@ class BountyLookupService implements LookupService {
       // Store the bounty record
       await this.storage.storeBounty(
         repoOwnerKey,
+        repoOwnerSig,
         repoOwnerName,
         repoName,
         issueNumber,
-        amount,
-        funderPublicKey,
+        issueTitle,
         txid,
         outputIndex,
-        issueTitle,
         'open',
         new Date(),
-        description
+        'Test description bussy'
       )
     } catch (error) {
       console.error('Lookup Service: Failed to process bounty output:', error)
@@ -131,6 +128,11 @@ class BountyLookupService implements LookupService {
           type: 'freeform',
           result
         }
+      }
+
+      if(query === 'findAll') {
+        console.log('Find all using UTXO reference')
+        return await this.storage.findAll()
       }
 
       if (isRepoQuery(query)) {

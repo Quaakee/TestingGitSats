@@ -1,9 +1,10 @@
 // backend/tests/test-query.ts
-import { LookupResolver } from '@bsv/sdk';
+import { LookupResolver, ProtoWallet } from '@bsv/sdk';
 import { BountyReference } from '../types/bounty.js';
 
 async function queryBounties(): Promise<BountyReference[]> {
   try {
+    const anyoneWallet = new ProtoWallet('anyone')
     const lookupResolver = new LookupResolver({ networkPreset: 'local' });
     
     // Query all bounties
@@ -17,6 +18,7 @@ async function queryBounties(): Promise<BountyReference[]> {
     }
     
     console.log('All bounties:', JSON.stringify(response.result, null, 2));
+    
     
     // Query bounties for a specific repository
     const repoResponse = await lookupResolver.query({

@@ -7,11 +7,12 @@ BountyContract.loadArtifact(bountyContractJson)
 
 async function createAndBroadcastBounty() {
   try {
+    debugger
     // Initialize the wallet
     const wallet = new WalletClient('auto', 'localhost');
     debugger
     // Sample bounty data
-    const repoOwner = 'bitcoin-sv';
+    const repoOwnerName = 'bitcoin-sv';
     const repoName = 'bsv-overlay';
     const amount = 20000; // 50,000 satoshis
     const repoOwnerKey = (await wallet.getPublicKey({ identityKey: true })).publicKey;
@@ -32,16 +33,14 @@ async function createAndBroadcastBounty() {
     
     const bounty = new BountyContract(
       PubKey(repoOwnerKey),
-      signature,
-      toByteString(repoOwner, false),
-      toByteString(repoName, false),
+      toByteString(signature, false),
+      toByteString(repoOwnerName, true),
+      toByteString(repoName, true),
       BigInt(issueNumber),
-      toByteString(issueTitle, false),
+      toByteString(issueTitle, true),
     )
 
     const lockingScript = bounty.lockingScript.toHex()
-    
-    debugger
     
     // Create the transaction
     const { txid, tx } = await wallet.createAction({
@@ -50,7 +49,7 @@ async function createAndBroadcastBounty() {
         satoshis: 1000, // Dust limit plus a bit extra
         outputDescription: 'GitHub Bounty'
       }],
-      description: `Create bounty for ${repoOwner}/${repoName}#${issueNumber}`
+      description: `Create bounty for ${repoOwnerName}/${repoName}#${issueNumber}`
     });
     
     console.log(`Transaction created with txid: ${txid}`);
