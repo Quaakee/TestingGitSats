@@ -1,5 +1,5 @@
 // backend/tests/test-query.ts
-import { LookupResolver, ProtoWallet, Transaction, Utils } from '@bsv/sdk'
+import { LookupResolver, ProtoWallet, Transaction, Utils, LookupAnswer } from '@bsv/sdk'
 import { BountyReference } from '../types/bounty.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 import { BountyContract } from '../contracts/BountyContract.js'
@@ -17,7 +17,8 @@ async function queryBounties(): Promise<BountyReference[]> {
       query: 'findAll'
     });
     
-    if (lookupResult.type !== 'freeform') {
+    
+    if (lookupResult.type !== 'output-list') {
       throw new Error('Unexpected response type');
     }
 

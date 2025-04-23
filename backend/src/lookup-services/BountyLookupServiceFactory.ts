@@ -123,11 +123,7 @@ class BountyLookupService implements LookupService {
       // Handle specific queries
       if (query === 'findAllBounties') {
         console.log('Lookup Service: Finding all bounties')
-        const result = await this.storage.findAllBounties()
-        return {
-          type: 'freeform',
-          result
-        }
+        return await this.storage.findAllBounties()
       }
 
       if(query === 'findAll') {
