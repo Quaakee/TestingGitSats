@@ -37,16 +37,16 @@ export class BountyContract extends SmartContract {
     certServerSig: ByteString
     */
     // GitHub repository and issue details
-    @prop()
+    @prop(true)
     repoOwnerName: ByteString
 
-    @prop()
+    @prop(true)
     repoName: ByteString
 
-    @prop()
+    @prop(true)
     issueNumber: bigint
 
-    @prop()
+    @prop(true)
     issueTitle: ByteString
     
     @prop(true)
@@ -81,15 +81,13 @@ export class BountyContract extends SmartContract {
      * Allow the repo owner to add more funds into the contract.
      */
     @method(SigHash.ALL) 
-    public addFunds() {
+    public addFunds(sig: Sig, amount: bigint) {
 
-        const addedAmount: bigint = this.ctx.utxo.value
+        assert(this.checkSig(sig, this.repoOwnerKey), 'Only repository owner can add funds')
 
-        //Accumulate funds
-        this.currentBalance += addedAmount
+        this.currentBalance += amount
     
-        const newOutput = this.buildStateOutput(this.currentBalance)
-        const outputs = this.buildChangeOutput()
+        const outputs = this.buildStateOutput(this.currentBalance) + this.buildChangeOutput()
     
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
 
