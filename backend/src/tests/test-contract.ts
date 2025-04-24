@@ -14,11 +14,11 @@ async function createAndBroadcastBounty() {
     // Sample bounty data
     const repoOwnerName = 'bitcoin-sv';
     const repoName = 'bsv-overlay';
-    const amount = 20000; // 50,000 satoshis
     const repoOwnerKey = (await wallet.getPublicKey({ identityKey: true })).publicKey;
     const issueTitle = 'Fix performance in Topic Manager';
     const issueNumber = 69;
     const description = 'The topic manager is slow when processing large transactions';
+    const currentBalance = 0 // The contract will start with a balance of 0
 
     const signature = Utils.toHex(
       (
@@ -38,6 +38,7 @@ async function createAndBroadcastBounty() {
       toByteString(repoName, true),
       BigInt(issueNumber),
       toByteString(issueTitle, true),
+      BigInt(currentBalance)
     )
 
     const lockingScript = bounty.lockingScript.toHex()

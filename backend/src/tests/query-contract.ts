@@ -3,7 +3,7 @@ import { LookupResolver, ProtoWallet, Transaction, Utils, LookupAnswer } from '@
 import { BountyReference } from '../types/bounty.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 import { BountyContract } from '../contracts/BountyContract.js'
-import { bsv, toByteString, PubKey } from 'scrypt-ts'
+import { bsv, toByteString, PubKey, fromByteString} from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 
 async function queryBounties(): Promise<BountyReference[]> {
@@ -57,10 +57,11 @@ async function queryBounties(): Promise<BountyReference[]> {
         parsedResults.push({
           repoOwnerKey: bounty.repoOwnerKey,
           repoOwnerSig: bounty.repoOwnerSig,
-          repoOwnerName: bounty.repoOwnerName,
-          repoName: bounty.repoName,
+          repoOwnerName: fromByteString(bounty.repoOwnerName),
+          repoName: fromByteString(bounty.repoName),
           issueNumber: Number(bounty.issueNumber),
-          issueTitle: bounty.issueTitle,
+          issueTitle: fromByteString(bounty.issueTitle),
+          currentBalance: Number(bounty.currentBalance),
           txid: tx.id('hex'),
           outputIndex: result.outputIndex,
           status: 'open',

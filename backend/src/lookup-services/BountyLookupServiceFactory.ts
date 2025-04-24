@@ -38,6 +38,7 @@ class BountyLookupService implements LookupService {
       const repoName = Utils.toHex(Utils.toArray(bounty.repoName, 'utf8'))
       const issueNumber = Number(bounty.issueNumber)
       const issueTitle = Utils.toHex(Utils.toArray(bounty.issueTitle, 'utf8'))
+      const currentBalance = Number(bounty.currentBalance)
       
       // Extract bounty data from pushdrop fields
       //const repoOwner = fields[0]?.toString()
@@ -58,6 +59,7 @@ class BountyLookupService implements LookupService {
         repoName,
         issueNumber,
         issueTitle,
+        currentBalance,
         txid,
         outputIndex,
         'open',

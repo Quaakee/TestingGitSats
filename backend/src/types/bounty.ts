@@ -34,6 +34,7 @@ export interface BountyRecord {
     repoName: string
     issueNumber: number
     issueTitle: string
+    currentBalance: number
     txid: string
     outputIndex: number
     status: string

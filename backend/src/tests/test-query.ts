@@ -10,7 +10,7 @@ async function queryBounties(): Promise<BountyReference[]> {
     // Query all bounties
     const response = await lookupResolver.query({
       service: 'ls_bounty',
-      query: 'findAllBounties'
+      query: 'findAll'
     });
     
     if (response.type !== 'freeform') {

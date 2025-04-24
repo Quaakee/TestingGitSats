@@ -7,24 +7,28 @@ contract BountyContract {
   bytes repoName;
   int issueNumber;
   bytes issueTitle;
+  @state int currentBalance;
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(PubKey repoOwnerKey, bytes repoOwnerSig, bytes repoOwnerName, bytes repoName, int issueNumber, bytes issueTitle) {
+  constructor(PubKey repoOwnerKey, bytes repoOwnerSig, bytes repoOwnerName, bytes repoName, int issueNumber, bytes issueTitle, int currentBalance) {
     this.repoOwnerKey = repoOwnerKey;
     this.repoOwnerSig = repoOwnerSig;
     this.repoOwnerName = repoOwnerName;
     this.repoName = repoName;
     this.issueNumber = issueNumber;
     this.issueTitle = issueTitle;
+    this.currentBalance = currentBalance;
   }
   public function addFunds(SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
     require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
     this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
     this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
     this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
-    bytes out = this.buildStateOutput(this.__scrypt_ts_ctx_value);
-    bytes outputs = out + this.buildChangeOutput();
+    int addedAmount = this.__scrypt_ts_ctx_value;
+    this.currentBalance += addedAmount;
+    bytes newOutput = this.buildStateOutput(this.currentBalance);
+    bytes outputs = this.buildChangeOutput();
     require(hash256(outputs) == this.__scrypt_ts_ctx_hashoutputs);
   }
   public function payBounty(Sig repoOwnerSig, PubKey userPubKey, int amount, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {

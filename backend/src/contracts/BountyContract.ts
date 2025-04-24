@@ -49,8 +49,8 @@ export class BountyContract extends SmartContract {
     @prop()
     issueTitle: ByteString
     
-    //@prop(true)
-    //currentBalance: bigint
+    @prop(true)
+    currentBalance: bigint
 
 
 
@@ -63,7 +63,7 @@ export class BountyContract extends SmartContract {
         repoName: ByteString, 
         issueNumber: bigint,
         issueTitle: ByteString,
-        //currentBalance: bigint
+        currentBalance: bigint
     ) {
         super(...arguments)
         this.repoOwnerKey = repoOwnerKey
@@ -74,7 +74,7 @@ export class BountyContract extends SmartContract {
         this.repoName = repoName
         this.issueNumber = issueNumber
         this.issueTitle = issueTitle
-        //this.currentBalance = currentBalance
+        this.currentBalance = currentBalance
     }
 
     /**
@@ -82,22 +82,22 @@ export class BountyContract extends SmartContract {
      */
     @method(SigHash.ALL) 
     public addFunds() {
-        /* OLD IMPLEMENTATION
+
         const addedAmount: bigint = this.ctx.utxo.value
 
-        // Accumulate funds
-        //this.currentBalance += addedAmount
+        //Accumulate funds
+        this.currentBalance += addedAmount
     
-        //const newOutput = this.buildStateOutput(this.currentBalance)
+        const newOutput = this.buildStateOutput(this.currentBalance)
         const outputs = this.buildChangeOutput()
     
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
 
-        */
-
+        /* OLD IMPLEMENTATION
         const out = this.buildStateOutput(this.ctx.utxo.value)
         const outputs = out + this.buildChangeOutput()
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
+        */
     }
     /**
      * Pay a user for solving a GitHub issue. 
@@ -157,6 +157,8 @@ export class BountyContract extends SmartContract {
             this.checkSig(repoOwnerSig, this.repoOwnerKey),
             'Invalid repository owner signature'
         )
+
+        // Add cert server verification here to prevent scams
 
         // Ensure sufficient funds
         assert(amount <= this.ctx.utxo.value, 'Not enough funds')
