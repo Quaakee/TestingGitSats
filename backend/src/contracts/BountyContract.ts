@@ -23,10 +23,10 @@ import {
  * 4. Withdrawing unclaimed bounties
  */
 export class BountyContract extends SmartContract {
-    @prop(true)
+    @prop()
     repoOwnerKey: PubKey
 
-    @prop(true)
+    @prop()
     repoOwnerSig: ByteString
 
     /*

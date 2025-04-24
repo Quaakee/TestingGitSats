@@ -1,8 +1,8 @@
 struct __scrypt_ts_Change {  int amount;  Ripemd160 address;}
 
 contract BountyContract {
-  @state PubKey repoOwnerKey;
-  @state bytes repoOwnerSig;
+  PubKey repoOwnerKey;
+  bytes repoOwnerSig;
   bytes repoOwnerName;
   bytes repoName;
   int issueNumber;
