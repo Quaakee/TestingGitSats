@@ -32,7 +32,8 @@
         "run-query-bounty": "node dist/esm/src/tests/test-query.js",
         "test-bounty": "npm run build-test-bounty && npm run run-test-bounty",
         "test-contract": "node dist/esm/src/tests/test-contract.js",
-        "query-contract": "node dist/esm/src/tests/query-contract.js"
+        "query-contract": "node dist/esm/src/tests/query-contract.js",
+        "test-function": "node dist/esm/src/tests/test-bounty-function.js"
     },
     "keywords": [
         "github",
