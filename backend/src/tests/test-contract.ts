@@ -2,7 +2,7 @@
 import { WalletClient, TopicBroadcaster, Utils, PushDrop, Transaction} from '@bsv/sdk';
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 import { BountyContract } from '../contracts/BountyContract.js'
-import { bsv, toByteString, PubKey } from 'scrypt-ts'
+import { bsv, toByteString, PubKey, Sig } from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 
 async function createAndBroadcastBounty() {
@@ -40,6 +40,7 @@ async function createAndBroadcastBounty() {
       toByteString(issueTitle, true),
       BigInt(currentBalance)
     )
+    //bounty.addFunds(Sig(signature), 10000n)
 
     const lockingScript = bounty.lockingScript.toHex()
     
