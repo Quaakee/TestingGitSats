@@ -52,7 +52,7 @@ async function queryBounties(): Promise<BountyReference[]> {
 
         const atomicBeefTX = Utils.toHex(tx.toAtomicBEEF())
 
-        console.log('fetchMeters Transaction atomicBeefTX:', atomicBeefTX)
+        //console.log('fetchMeters Transaction atomicBeefTX:', atomicBeefTX)
 
         parsedResults.push({
           repoOwnerKey: bounty.repoOwnerKey,
@@ -74,7 +74,7 @@ async function queryBounties(): Promise<BountyReference[]> {
         throw error
       }
     }
-
+    console.log(parsedResults)
     return parsedResults as BountyReference[]
   } catch (error) {
     console.error('Error querying bounties:', error);
