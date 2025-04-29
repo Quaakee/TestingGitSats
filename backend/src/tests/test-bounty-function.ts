@@ -11,6 +11,7 @@ const anyoneWallet = new ProtoWallet('anyone')
 // Main wallet for transactions
 const walletClient = new WalletClient('auto', 'localhost')
 
+debugger
 async function testBountyFunctions() {
   try {
     console.log('Starting BountyContract function tests...')
