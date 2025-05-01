@@ -7,36 +7,24 @@ import {
     Utils,
     pubKey2Addr,
     SigHash,
-    byteString2Int,
     ByteString,
     PubKey,
     Sig
 } from 'scrypt-ts'
 
 /**
- * A smart contract for GitHub issues-based bounties.
+ * A smart contract for GitHub issue bounties.
  * 
  * This contract allows:
- * 1. Creating bounties for GitHub issues
- * 2. Adding funds to existing bounties
- * 3. Claiming bounties with certification from GitHub identity authority
- * 4. Withdrawing unclaimed bounties
+ * - Adding funds to a specific GitHub issue
+ * - Paying out the full bounty to a developer
+ * - Allowing the repo owner to withdraw unclaimed funds
  */
 export class BountyContract extends SmartContract {
+    // Static (unchanging) properties
     @prop()
     repoOwnerKey: PubKey
 
-    @prop()
-    repoOwnerSig: ByteString
-
-    /*
-    @prop(true)
-    certServerKey: PubKey
-
-    @prop(true)
-    certServerSig: ByteString
-    */
-    // GitHub repository and issue details
     @prop(true)
     repoOwnerName: ByteString
 
@@ -48,133 +36,88 @@ export class BountyContract extends SmartContract {
 
     @prop(true)
     issueTitle: ByteString
-    
-    @prop(true)
-    currentBalance: bigint
-
-
 
     constructor(
         repoOwnerKey: PubKey,
-        repoOwnerSig: ByteString,
-        //certServerKey: PubKey,
-        //certServerSig: ByteString,
-        repoOwnerName: ByteString, 
-        repoName: ByteString, 
+        repoOwnerName: ByteString,
+        repoName: ByteString,
         issueNumber: bigint,
-        issueTitle: ByteString,
-        currentBalance: bigint
+        issueTitle: ByteString
     ) {
         super(...arguments)
         this.repoOwnerKey = repoOwnerKey
-        this.repoOwnerSig = repoOwnerSig
-        //this.certServerKey = certServerKey
-        //this.certServerSig = certServerSig
         this.repoOwnerName = repoOwnerName
         this.repoName = repoName
         this.issueNumber = issueNumber
         this.issueTitle = issueTitle
-        this.currentBalance = currentBalance
     }
 
     /**
-     * Allow the repo owner to add more funds into the contract.
+     * Add more funds to the contract. The sender must be the repo owner.
      */
-    @method(SigHash.ALL) 
-    public addFunds(sig: Sig, amount: bigint) {
+    @method(SigHash.ALL)
+    public addFunds(sig: Sig) {
+        // Verify the repo owner signed this
+        assert(this.checkSig(sig, this.repoOwnerKey), 'Only repo owner can add funds')
 
-        assert(this.checkSig(sig, this.repoOwnerKey), 'Only repository owner can add funds')
+        // New contract output must match updated balance
+        const newBalance = this.ctx.utxo.value  // The input UTXO (contract)
+        const outputs = this.buildStateOutput(newBalance)
 
-        this.currentBalance += amount
-    
-        const outputs = this.buildStateOutput(this.currentBalance) + this.buildChangeOutput()
-    
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
-
-        /* OLD IMPLEMENTATION
-        const out = this.buildStateOutput(this.ctx.utxo.value)
-        const outputs = out + this.buildChangeOutput()
-        assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
-        */
     }
+
     /**
-     * Pay a user for solving a GitHub issue. 
-     * 
-     * @param repoOwnerSig   ECDSA signature from the repoOwner for spending
-     * @param certServerSig  ECDSA signature from the certificate server
-     * @param userPubKey     The public key of developer who solved it
-     * @param amount         How much the dev is paid (remaining stays in contract)
+     * Pay the full bounty to a developer who completed the GitHub issue.
      */
     @method(SigHash.ANYONECANPAY_ALL)
     public payBounty(
         repoOwnerSig: Sig,
-        //certServerSig: Sig,
-        userPubKey: PubKey,
-        amount: bigint
+        userPubKey: PubKey
     ) {
-        // 1) Check the repoOwner's signature for authorization
+        // Must be signed by repo owner
         assert(
             this.checkSig(repoOwnerSig, this.repoOwnerKey),
-            'Repository owner signature invalid'
+            'Invalid repo owner signature'
         )
 
-        // 2) Check certificate server signature to verify GitHub identity TODO
-        
-        //assert(
-            //this.checkSig(certServerSig, this.certServerKey),
-            //'Certificate server signature invalid'
-        //) 
+        // Optional: Add identity verification logic here (e.g., from cert server)
 
-        // 3) Ensure sufficient funds
-        assert(amount <= this.ctx.utxo.value, 'Insufficient funds')
+        const bountyAmount = this.ctx.utxo.value
 
-        // 4) Pay the developer
+        // Pay the developer full bounty amount
         const devAddr = pubKey2Addr(userPubKey)
-        let outputs = Utils.buildPublicKeyHashOutput(devAddr, amount)
+        const outputs = Utils.buildPublicKeyHashOutput(devAddr, bountyAmount)
 
-        // 5) Return remaining funds to the contract
-        const remaining = this.ctx.utxo.value - amount
-        if (remaining > 0n) {
-            outputs += this.buildStateOutput(remaining)
-        }
-
-        // Add change output
-        outputs += this.buildChangeOutput()
-
-        // Verify outputs hash matches
+        // No change or remaining funds — full payout
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
     }
 
     /**
-     * Allow the repo owner to withdraw funds if needed
+     * Allow repo owner to withdraw unclaimed bounty.
      */
     @method(SigHash.ALL)
     public withdraw(repoOwnerSig: Sig, amount: bigint) {
-        // Check signature
         assert(
             this.checkSig(repoOwnerSig, this.repoOwnerKey),
             'Invalid repository owner signature'
         )
 
-        // Add cert server verification here to prevent scams
-
-        // Ensure sufficient funds
+        // Validate sufficient funds
         assert(amount <= this.ctx.utxo.value, 'Not enough funds')
 
-        // Pay the repo owner
         const ownerAddr = pubKey2Addr(this.repoOwnerKey)
         let outputs = Utils.buildPublicKeyHashOutput(ownerAddr, amount)
 
-        // Return remaining funds to the contract
+        // Return remaining funds to new contract state
         const remaining = this.ctx.utxo.value - amount
         if (remaining > 0n) {
             outputs += this.buildStateOutput(remaining)
         }
 
-        // Add change output
+        // Add wallet change output
         outputs += this.buildChangeOutput()
 
-        // Verify outputs hash matches
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
     }
 }

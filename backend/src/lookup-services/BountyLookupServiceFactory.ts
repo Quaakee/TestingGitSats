@@ -3,7 +3,7 @@ import { BountyStorage } from './BountyStorage.js'
 import { Script, Utils, Transaction, PushDrop } from '@bsv/sdk'
 import { Db } from 'mongodb'
 import { BountyReference, RepoIssueReference } from '../types/bounty.js'
-import { BountyContract } from '../contracts/BountyContract.js'
+import { BountyContract } from '../contracts/BountyContract-old.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 BountyContract.loadArtifact(bountyContractJson)
 

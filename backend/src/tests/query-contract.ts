@@ -2,7 +2,7 @@
 import { LookupResolver, ProtoWallet, Transaction, Utils, LookupAnswer } from '@bsv/sdk'
 import { BountyReference } from '../types/bounty.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
-import { BountyContract } from '../contracts/BountyContract.js'
+import { BountyContract } from '../contracts/BountyContract-old.js'
 import { bsv, toByteString, PubKey, fromByteString} from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 

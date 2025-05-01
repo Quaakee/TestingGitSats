@@ -1,7 +1,7 @@
 // test-bounty.js
 import { WalletClient, TopicBroadcaster, Utils, PushDrop, Transaction} from '@bsv/sdk';
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
-import { BountyContract } from '../contracts/BountyContract.js'
+import { BountyContract } from '../contracts/BountyContract-old.js'
 import { bsv, toByteString, PubKey, Sig } from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 
