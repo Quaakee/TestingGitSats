@@ -1,7 +1,7 @@
 // test-bounty.js
 import { WalletClient, TopicBroadcaster, Utils, PushDrop, Transaction} from '@bsv/sdk';
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
-import { BountyContract } from '../contracts/BountyContract-old.js'
+import { BountyContract } from '../contracts/BountyContract.js'
 import { bsv, toByteString, PubKey, Sig } from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 
@@ -12,14 +12,14 @@ async function createAndBroadcastBounty() {
     const wallet = new WalletClient('auto', 'localhost');
     debugger
     // Sample bounty data
-    const repoOwnerName = 'bitcoin-sv';
-    const repoName = 'bsv-overlay';
+    const repoOwnerName = 'Ishaan Lahoti';
+    const repoName = 'Pooop-generator';
     const repoOwnerKey = (await wallet.getPublicKey({ identityKey: true })).publicKey;
-    const issueTitle = 'Fix performance in Topic Manager';
+    const issueTitle = 'Poop in the sink';
     const issueNumber = 69;
     const description = 'The topic manager is slow when processing large transactions';
-    const currentBalance = 0 // The contract will start with a balance of 0
 
+    
     const signature = Utils.toHex(
       (
         await wallet.createSignature({
@@ -38,7 +38,6 @@ async function createAndBroadcastBounty() {
       toByteString(repoName, true),
       BigInt(issueNumber),
       toByteString(issueTitle, true),
-      BigInt(currentBalance)
     )
     //bounty.addFunds(Sig(signature), 10000n)
 
@@ -48,7 +47,7 @@ async function createAndBroadcastBounty() {
     const { txid, tx } = await wallet.createAction({
       outputs: [{
         lockingScript: lockingScript,
-        satoshis: 1000, // Dust limit plus a bit extra
+        satoshis: 6969, // Dust limit plus a bit extra
         outputDescription: 'GitHub Bounty'
       }],
       description: `Create bounty for ${repoOwnerName}/${repoName}#${issueNumber}`

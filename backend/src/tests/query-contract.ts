@@ -2,7 +2,7 @@
 import { LookupResolver, ProtoWallet, Transaction, Utils, LookupAnswer } from '@bsv/sdk'
 import { BountyReference } from '../types/bounty.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
-import { BountyContract } from '../contracts/BountyContract-old.js'
+import { BountyContract } from '../contracts/BountyContract.js'
 import { bsv, toByteString, PubKey, fromByteString} from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 
@@ -17,7 +17,7 @@ async function queryBounties(): Promise<BountyReference[]> {
       query: 'findAll'
     });
     
-    
+    debugger
     if (lookupResult.type !== 'output-list') {
       throw new Error('Unexpected response type');
     }
@@ -27,15 +27,17 @@ async function queryBounties(): Promise<BountyReference[]> {
     for (const result of lookupResult.outputs) {
       try {
         const tx = Transaction.fromBEEF(result.beef)
-        const script = tx.outputs[
-          Number(result.outputIndex)
-        ].lockingScript.toHex() 
+        const output = tx.outputs[Number(result.outputIndex)];
+        const script = output.lockingScript.toHex();
+        const balance = output.satoshis
         const bounty = BountyContract.fromLockingScript(
           script
         ) as BountyContract
 
+
         console.log("Repo name:", bounty.repoName)
         console.log("Repo owner:", bounty.repoOwnerName)
+        console.log("Contract balance: ", balance)
 
         // Verify signature using protowallet
         const verifyResult = await anyoneWallet.verifySignature({
@@ -61,7 +63,6 @@ async function queryBounties(): Promise<BountyReference[]> {
           repoName: fromByteString(bounty.repoName),
           issueNumber: Number(bounty.issueNumber),
           issueTitle: fromByteString(bounty.issueTitle),
-          currentBalance: Number(bounty.currentBalance),
           txid: tx.id('hex'),
           outputIndex: result.outputIndex,
           status: 'open',
@@ -76,6 +77,7 @@ async function queryBounties(): Promise<BountyReference[]> {
     }
     console.log(parsedResults)
     return parsedResults as BountyReference[]
+    debugger
   } catch (error) {
     console.error('Error querying bounties:', error);
     throw error;

@@ -1,7 +1,7 @@
 import { AdmittanceInstructions, TopicManager } from '@bsv/overlay'
 import { Transaction, Utils, PublicKey, Script, PushDrop, ProtoWallet} from '@bsv/sdk'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
-import { BountyContract } from '../contracts/BountyContract-old.js'
+import { BountyContract } from '../contracts/BountyContract.js'
 BountyContract.loadArtifact(bountyContractJson)
 
 const anyoneWallet = new ProtoWallet('anyone')

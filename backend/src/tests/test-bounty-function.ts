@@ -1,7 +1,7 @@
 // backend/src/tests/test-bounty-functions.ts
 import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet } from '@bsv/sdk';
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
-import { BountyContract } from '../contracts/BountyContract-old.js'
+import { BountyContract } from '../contracts/BountyContract.js'
 import { bsv, toByteString, PubKey, Sig, MethodCallOptions } from 'scrypt-ts'
 BountyContract.loadArtifact(bountyContractJson)
 
@@ -42,7 +42,6 @@ async function testBountyFunctions() {
       toByteString(repoName, true),
       BigInt(issueNumber),
       toByteString(issueTitle, true),
-      BigInt(initialBalance)
     )
     
     // Deploy the initial contract
@@ -92,7 +91,6 @@ async function testBountyFunctions() {
     // Create the next contract state with added funds
     const addAmount = 5000n
     const nextBounty = BountyContract.fromLockingScript(lockingScript) as BountyContract
-    nextBounty.currentBalance = nextBounty.currentBalance + addAmount
     const nextScript = nextBounty.lockingScript
     
     // Create a BSV Transaction for sCrypt Smart Contract usage
@@ -132,8 +130,7 @@ async function testBountyFunctions() {
         
         // Call the addFunds method
         await (self as BountyContract).addFunds(
-          Sig(Utils.toHex(addFundsSig.signature)),
-          addAmount
+          Sig(Utils.toHex(addFundsSig.signature)), 5000n
         )
       }
     )
@@ -195,7 +192,6 @@ async function testBountyFunctions() {
     // Create the next contract state after paying the bounty
     const payAmount = 3000n // Amount to pay the developer
     const afterPayBounty = BountyContract.fromLockingScript(updatedScript) as BountyContract
-    afterPayBounty.currentBalance = BigInt(updatedSatoshis) - payAmount
     const afterPayScript = afterPayBounty.lockingScript
     
     // Get the current bounty contract from chain
@@ -249,8 +245,7 @@ async function testBountyFunctions() {
         // Call the payBounty method
         await (self as BountyContract).payBounty(
           Sig(Utils.toHex(payBountySig.signature)),
-          PubKey(devPublicKey),
-          payAmount
+          PubKey(devPublicKey)
         )
       }
     )

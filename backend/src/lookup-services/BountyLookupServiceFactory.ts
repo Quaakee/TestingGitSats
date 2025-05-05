@@ -3,7 +3,7 @@ import { BountyStorage } from './BountyStorage.js'
 import { Script, Utils, Transaction, PushDrop } from '@bsv/sdk'
 import { Db } from 'mongodb'
 import { BountyReference, RepoIssueReference } from '../types/bounty.js'
-import { BountyContract } from '../contracts/BountyContract-old.js'
+import { BountyContract } from '../contracts/BountyContract.js'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 BountyContract.loadArtifact(bountyContractJson)
 
@@ -38,7 +38,6 @@ class BountyLookupService implements LookupService {
       const repoName = Utils.toHex(Utils.toArray(bounty.repoName, 'utf8'))
       const issueNumber = Number(bounty.issueNumber)
       const issueTitle = Utils.toHex(Utils.toArray(bounty.issueTitle, 'utf8'))
-      const currentBalance = Number(bounty.currentBalance)
       
       // Extract bounty data from pushdrop fields
       //const repoOwner = fields[0]?.toString()
@@ -59,7 +58,6 @@ class BountyLookupService implements LookupService {
         repoName,
         issueNumber,
         issueTitle,
-        currentBalance,
         txid,
         outputIndex,
         'open',

@@ -33,7 +33,8 @@
         "test-bounty": "npm run build-test-bounty && npm run run-test-bounty",
         "test-contract": "node dist/esm/src/tests/test-contract.js",
         "query-contract": "node dist/esm/src/tests/query-contract.js",
-        "test-function": "node dist/esm/src/tests/test-bounty-function.js"
+        "test-function": "node dist/esm/src/tests/test-bounty-function.js",
+        "add-funds": "node dist/esm/src/tests/add-funds.js"
     },
     "keywords": [
         "github",
