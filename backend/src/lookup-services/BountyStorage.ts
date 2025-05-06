@@ -21,7 +21,6 @@ export class BountyStorage {
    */
   async storeBounty(
     repoOwnerKey: string,
-    repoOwnerSig: string,
     repoOwnerName: string,
     repoName: string,
     issueNumber: number,
@@ -48,7 +47,6 @@ export class BountyStorage {
     try {
       await this.bounties.insertOne({
         repoOwnerKey,
-        repoOwnerSig,
         repoOwnerName,
         repoName,
         issueNumber,
@@ -122,7 +120,6 @@ export class BountyStorage {
     return await this.bounties.find({})
       .project<BountyReference>({
         repoOwnerKey: 1,
-        repoOwnerSig: 1,
         repoOwnerName: 1,
         repoName: 1,
         issueNumber: 1,

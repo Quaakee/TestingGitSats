@@ -33,7 +33,6 @@ async function createAndBroadcastBounty() {
     
     const bounty = new BountyContract(
       PubKey(repoOwnerKey),
-      toByteString(signature, false),
       toByteString(repoOwnerName, true),
       toByteString(repoName, true),
       BigInt(issueNumber),

@@ -37,7 +37,6 @@ async function testBountyFunctions() {
     console.log('Creating bounty contract...')
     let bounty = new BountyContract(
       PubKey(repoOwnerPublicKey),
-      toByteString(signature, false),
       toByteString(repoOwnerName, true),
       toByteString(repoName, true),
       BigInt(issueNumber),

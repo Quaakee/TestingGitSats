@@ -29,7 +29,6 @@ export interface BountyRecord {
   // Simplified bounty reference for list views
   export interface BountyReference {
     repoOwnerKey: string
-    repoOwnerSig: string
     repoOwnerName: string
     repoName: string
     issueNumber: number

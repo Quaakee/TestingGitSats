@@ -25,9 +25,6 @@ export class BountyContract extends SmartContract {
     @prop()
     repoOwnerKey: PubKey
 
-    @prop()
-    repoOwnerSig: ByteString
-
     @prop(true)
     repoOwnerName: ByteString
 
@@ -42,7 +39,6 @@ export class BountyContract extends SmartContract {
 
     constructor(
         repoOwnerKey: PubKey,
-        repoOwnerSig: ByteString,
         repoOwnerName: ByteString,
         repoName: ByteString,
         issueNumber: bigint,
@@ -50,7 +46,6 @@ export class BountyContract extends SmartContract {
     ) {
         super(...arguments)
         this.repoOwnerKey = repoOwnerKey
-        this.repoOwnerSig = repoOwnerSig
         this.repoOwnerName = repoOwnerName
         this.repoName = repoName
         this.issueNumber = issueNumber
@@ -62,8 +57,8 @@ export class BountyContract extends SmartContract {
      */
     @method(SigHash.ALL)
     public addFunds(sig: Sig, amount: bigint) {
-        debugger
         // Verify the repo owner signed this
+        debugger
         assert(this.checkSig(sig, this.repoOwnerKey), 'Only repo owner can add funds')
 
         // New contract output must match updated balance

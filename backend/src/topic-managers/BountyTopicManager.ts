@@ -39,6 +39,7 @@ export default class BountyTopicManager implements TopicManager {
           const bounty = BountyContract.fromLockingScript(output.lockingScript.toHex()) as BountyContract
 
           // Verify repo owner signature
+          /*
           const verifyResult = await anyoneWallet.verifySignature({
             protocolID: [0, 'bounty'],
             keyID: '1',
@@ -46,10 +47,16 @@ export default class BountyTopicManager implements TopicManager {
             data: [1],
             signature: Utils.toArray(bounty.repoOwnerSig, 'hex')
           })
+
           console.log(verifyResult)
+          */
+         
+          /*
           if (verifyResult.valid !== true) {
             throw new Error('Signature invalid')
           }
+            */
+
           // I would add certserversig verification here as well
           //const fields = decodedScript.fields
           

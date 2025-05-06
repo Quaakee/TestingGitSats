@@ -2,7 +2,6 @@ struct __scrypt_ts_Change {  int amount;  Ripemd160 address;}
 
 contract BountyContract {
   PubKey repoOwnerKey;
-  bytes repoOwnerSig;
   @state bytes repoOwnerName;
   @state bytes repoName;
   @state int issueNumber;
@@ -10,9 +9,8 @@ contract BountyContract {
   bytes __scrypt_ts_ctx_hashoutputs;
   int __scrypt_ts_ctx_value;
   __scrypt_ts_Change __scrypt_ts_change;
-  constructor(PubKey repoOwnerKey, bytes repoOwnerSig, bytes repoOwnerName, bytes repoName, int issueNumber, bytes issueTitle) {
+  constructor(PubKey repoOwnerKey, bytes repoOwnerName, bytes repoName, int issueNumber, bytes issueTitle) {
     this.repoOwnerKey = repoOwnerKey;
-    this.repoOwnerSig = repoOwnerSig;
     this.repoOwnerName = repoOwnerName;
     this.repoName = repoName;
     this.issueNumber = issueNumber;

@@ -39,6 +39,7 @@ async function queryBounties(): Promise<BountyReference[]> {
         console.log("Repo owner:", bounty.repoOwnerName)
         console.log("Contract balance: ", balance)
 
+        /*
         // Verify signature using protowallet
         const verifyResult = await anyoneWallet.verifySignature({
           protocolID: [0, 'bounty'],
@@ -50,7 +51,7 @@ async function queryBounties(): Promise<BountyReference[]> {
 
         if (!verifyResult.valid) {
           throw new Error('Signature invalid')
-        }
+        } */
 
         const atomicBeefTX = Utils.toHex(tx.toAtomicBEEF())
 
@@ -58,7 +59,6 @@ async function queryBounties(): Promise<BountyReference[]> {
 
         parsedResults.push({
           repoOwnerKey: bounty.repoOwnerKey,
-          repoOwnerSig: bounty.repoOwnerSig,
           repoOwnerName: fromByteString(bounty.repoOwnerName),
           repoName: fromByteString(bounty.repoName),
           issueNumber: Number(bounty.issueNumber),

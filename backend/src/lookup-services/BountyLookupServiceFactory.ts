@@ -33,7 +33,6 @@ class BountyLookupService implements LookupService {
 
       // parse out message fields from smart contract
       const repoOwnerKey = Utils.toHex(Utils.toArray(bounty.repoOwnerKey, 'utf8'))
-      const repoOwnerSig = Utils.toHex(Utils.toArray(bounty.repoOwnerSig, 'utf8'))
       const repoOwnerName = Utils.toHex(Utils.toArray(bounty.repoOwnerName, 'utf8'))
       const repoName = Utils.toHex(Utils.toArray(bounty.repoName, 'utf8'))
       const issueNumber = Number(bounty.issueNumber)
@@ -53,7 +52,6 @@ class BountyLookupService implements LookupService {
       // Store the bounty record
       await this.storage.storeBounty(
         repoOwnerKey,
-        repoOwnerSig,
         repoOwnerName,
         repoName,
         issueNumber,
