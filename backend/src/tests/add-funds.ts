@@ -186,7 +186,7 @@ async function testBountyAddFunds() {
     )
     
     // Prepare and send the transaction
-    const addFundsAction = await walletClient.createAction({
+    const {tx: addTX, txid: addTXID} = await walletClient.createAction({
       inputBEEF: Utils.toArray(tx, 'base64'),
       inputs: [
         {
@@ -203,15 +203,15 @@ async function testBountyAddFunds() {
         }
       ],
       description: `Adding ${additionalFunds} satoshis to bounty, new total: ${newTotalFunds}`,
-      options: { acceptDelayedBroadcast: false, randomizeOutputs: false }
+      options: { acceptDelayedBroadcast: true, randomizeOutputs: false }
     })
     
-    if (!addFundsAction.tx) {
+    if (!addTX) {
       throw new Error('Transaction is undefined after adding funds')
     }
     
     // Broadcast the addFunds transaction
-    const addFundsTx = Transaction.fromAtomicBEEF(addFundsAction.tx)
+    const addFundsTx = Transaction.fromAtomicBEEF(addTX)
     const addFundsTxid = addFundsTx.id('hex')
     
     broadcasterResult = await broadcaster.broadcast(addFundsTx)
