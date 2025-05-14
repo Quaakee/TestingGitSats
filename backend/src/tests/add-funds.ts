@@ -1,12 +1,23 @@
 // backend/tests/test-bounty-add-funds.ts
-import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet, ECDSA } from '@bsv/sdk'
+import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet, ECDSA, Signature, LockingScript, Script, WalletInterface} from '@bsv/sdk'
+import TransactionSignature from '@bsv/sdk/primitives/TransactionSignature'
+import UnlockingScript from '@bsv/sdk/script/UnlockingScript'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
 import { BountyContract } from '../../src/contracts/BountyContract.js'
-import { bsv, toByteString, PubKey, Sig, findSig } from 'scrypt-ts'
+import { bsv, toByteString, PubKey, Sig, findSig, SignatureHashType, SigHashPreimage, MethodCallOptions, P2PKH} from 'scrypt-ts'
+import { sha256 } from '@bsv/sdk/primitives/Hash'
+import { hash } from 'crypto'
+import { toArray } from '@bsv/sdk/primitives/utils'
 BountyContract.loadArtifact(bountyContractJson)
+
+function verifyTruthy<T>(v: T | undefined): T {
+  if (v == null) throw new Error('must have value')
+  return v
+}
 
 // For signature verification
 const anyoneWallet = new ProtoWallet('anyone')
+
 
 // Main wallet for transactions
 const walletClient = new WalletClient('auto', 'localhost')
@@ -20,11 +31,15 @@ async function testBountyAddFunds() {
     const repoOwnerPublicKeyHex = (await walletClient.getPublicKey({
       protocolID: [0, 'bounty'],
       keyID: '1',
-      counterparty: 'anyone'
+      counterparty: 'self',
+      forSelf: true
     })).publicKey
 
 
-    const repoOwnerPublicKey = PubKey(bsv.PublicKey.fromString(repoOwnerPublicKeyHex).toByteString())
+
+    const repoOwnerPublicKey = bsv.PublicKey.fromString(repoOwnerPublicKeyHex)
+
+    console.log('Compressed: ', bsv.PublicKey.fromString(repoOwnerPublicKeyHex).compressed)
 
     const repoOwnerName = 'test-owner'
     const repoName = 'test-repo'
@@ -38,12 +53,13 @@ async function testBountyAddFunds() {
     
     console.log('Creating bounty contract...')
     let bounty = new BountyContract(
-      repoOwnerPublicKey,
+      PubKey(repoOwnerPublicKey.toByteString()),
       toByteString(repoOwnerName, true),
       toByteString(repoName, true),
       BigInt(issueNumber),
       toByteString(issueTitle, true)
     )
+
     
     // Deploy the initial contract
     const lockingScript = bounty.lockingScript.toHex()
@@ -56,6 +72,7 @@ async function testBountyAddFunds() {
       }],
       description: `Create bounty for ${repoOwnerName}/${repoName}#${issueNumber}`
     })
+
     
     if (!tx) {
       throw new Error('Transaction is undefined after contract creation')
@@ -75,9 +92,10 @@ async function testBountyAddFunds() {
     console.log('Initial contract successfully broadcast to topic manager')
     
     // Convert transaction to format needed for later operations
-    const transaction = Transaction.fromAtomicBEEF(tx)
+
+
+
     const atomicBeefTX = Utils.toHex(tx)
-    
     // Wait a moment to ensure the transaction is processed
     
     // ------------------------------
@@ -86,32 +104,31 @@ async function testBountyAddFunds() {
     console.log('\nTesting addFunds function...')
     
     // Amount of funds to add - this will be passed as a parameter to addFunds
+
     const additionalFunds = BigInt(5000) // satoshis
     const newTotalFunds = initialFunding + Number(additionalFunds)
 
-    debugger
+
     // Create a BSV Transaction for sCrypt Smart Contract usage
 
-
+    // Parsed Bounty TX returns transaction
     const parsedFromTx = Transaction.fromAtomicBEEF(Utils.toArray(tx, 'base64'))
-    const offerScript = parsedFromTx.outputs[0].lockingScript
+
+    let index = 0
+    let bountyScript = parsedFromTx.outputs[0].lockingScript
+
+    if(parsedFromTx.outputs[0].satoshis !== Number(1000)) {
+      bountyScript = parsedFromTx.outputs[1].lockingScript
+      index = 1
+    }
 
     console.log(parsedFromTx.outputs)
 
     const existingBounty: BountyContract = BountyContract.fromLockingScript(
-      offerScript.toHex()
+      bountyScript.toHex()
     ) as BountyContract
-    
-
-    const sigKeyInfo = await walletClient.getPublicKey({
-      protocolID: [0, 'bounty'],
-      keyID: '1',
-      counterparty: 'anyone'
-    })
 
     console.log("Contract repoOwnerPublicKey", repoOwnerPublicKey)
-    console.log("Signature used publickey: ", sigKeyInfo.publicKey)
-
 
     const unlockingScript = await existingBounty.getUnlockingScript(
       async (self: BountyContract) => {
@@ -120,9 +137,9 @@ async function testBountyAddFunds() {
         debugger
         const bsvtx = new bsv.Transaction()
         bsvtx.from({
-          txId: txid!,
-          outputIndex: 0,
-          script: offerScript.toHex(),
+          txId: parsedFromTx.id('hex'),
+          outputIndex: index,
+          script: bountyScript.toHex(),
           satoshis: initialFunding
         })
         
@@ -138,35 +155,31 @@ async function testBountyAddFunds() {
           bsv.crypto.Signature.SIGHASH_ALL |
           bsv.crypto.Signature.SIGHASH_FORKID
 
-          const hashBuf = bsv.Transaction.Sighash.sighashPreimage(
-            bsvtx,
-            hashType,
-            0,
-            bsv.Script.fromBuffer(Buffer.from(offerScript.toHex(), 'hex')),
-            new bsv.crypto.BN(initialFunding)
-          )
+        const hashBuf = bsv.crypto.Hash.sha256(bsv.Transaction.Sighash.sighashPreimage(
+          bsvtx,
+          hashType,
+          0,
+          bsv.Script.fromBuffer(Buffer.from(bountyScript.toHex(), 'hex')),
+          new bsv.crypto.BN(initialFunding)))
         
+
         const { signature: SDKSignature } = await walletClient.createSignature({
           protocolID: [0, 'bounty'],
           keyID: '1',
-          counterparty: 'anyone',
+          counterparty: 'self',
           data: Array.from(hashBuf)
         })
 
-        const formattedSig = bsv.crypto.Signature.fromString(Buffer.from(SDKSignature).toString('hex'))
-        formattedSig.nhashtype = hashType
-        const finalSigHex = formattedSig.toTxFormat().toString('hex')
-
+        const signature = bsv.crypto.Signature.fromString(Buffer.from(SDKSignature).toString('hex'))
+        signature.nhashtype = hashType
+        const signatureHex = signature.toTxFormat().toString('hex')
 
         // Set transaction context for the smart contract call
         self.to = { tx: bsvtx, inputIndex: 0 }
-        self.from = { tx: new bsv.Transaction(parsedFromTx.toHex()), outputIndex: 0 }
+        self.from = { tx: new bsv.Transaction(parsedFromTx.toHex()), outputIndex: index }
         
         // Call the addFunds method with explicit amount parameter
-        await self.addFunds(
-          Sig(toByteString(finalSigHex)),
-          additionalFunds // Pass the amount to add as parameter
-        )
+        await self.methods.addFunds(Sig(toByteString(signatureHex)), additionalFunds)
       }
     )
     
