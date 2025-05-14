@@ -28,16 +28,14 @@ async function testBountyAddFunds() {
 
     // 1. First, create a new bounty contract
 
-    const repoOwnerPublicKeyHex = (await walletClient.getPublicKey({
+    const {publicKey: repoOwnerPublicKeyHex }= await walletClient.getPublicKey({
       protocolID: [0, 'bounty'],
       keyID: '1',
       counterparty: 'self',
       forSelf: true
-    })).publicKey
+    })
 
-
-
-    const repoOwnerPublicKey = bsv.PublicKey.fromString(repoOwnerPublicKeyHex)
+    const repoOwnerPublicKey = PubKey(bsv.PublicKey.fromString(repoOwnerPublicKeyHex).toByteString())
 
     console.log('Compressed: ', bsv.PublicKey.fromString(repoOwnerPublicKeyHex).compressed)
 
@@ -52,8 +50,9 @@ async function testBountyAddFunds() {
     // Create signature for the bounty
     
     console.log('Creating bounty contract...')
+
     let bounty = new BountyContract(
-      PubKey(repoOwnerPublicKey.toByteString()),
+      repoOwnerPublicKey,
       toByteString(repoOwnerName, true),
       toByteString(repoName, true),
       BigInt(issueNumber),
@@ -70,6 +69,9 @@ async function testBountyAddFunds() {
         satoshis: initialFunding,
         outputDescription: 'Initial Bounty Contract'
       }],
+      options: {
+        randomizeOutputs: false
+      },
       description: `Create bounty for ${repoOwnerName}/${repoName}#${issueNumber}`
     })
 
@@ -179,20 +181,20 @@ async function testBountyAddFunds() {
         self.from = { tx: new bsv.Transaction(parsedFromTx.toHex()), outputIndex: index }
         
         // Call the addFunds method with explicit amount parameter
-        await self.methods.addFunds(Sig(toByteString(signatureHex)), additionalFunds)
+        await self.addFunds(Sig(toByteString(signatureHex)), additionalFunds)
       }
     )
     
     // Prepare and send the transaction
     const addFundsAction = await walletClient.createAction({
+      inputBEEF: Utils.toArray(tx, 'base64'),
       inputs: [
         {
+          outpoint: `${parsedFromTx.id('hex')}.0`,
+          unlockingScript: unlockingScript.toHex(),
           inputDescription: 'Add funds to bounty contract',
-          outpoint: `${txid}.0`,
-          unlockingScript: unlockingScript.toHex()
         }
       ],
-      inputBEEF: Utils.toArray(atomicBeefTX, 'hex'),
       outputs: [
         {
           lockingScript: lockingScript, // Same locking script since state doesn't change
