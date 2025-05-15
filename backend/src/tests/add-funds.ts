@@ -1,5 +1,5 @@
 // backend/tests/test-bounty-add-funds.ts
-import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet, ECDSA, Signature, LockingScript, Script, WalletInterface, SHIPBroadcaster} from '@bsv/sdk'
+import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet, ECDSA, Signature, LockingScript, Script, WalletInterface, SHIPBroadcaster, } from '@bsv/sdk'
 import TransactionSignature from '@bsv/sdk/primitives/TransactionSignature'
 import UnlockingScript from '@bsv/sdk/script/UnlockingScript'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
@@ -34,6 +34,7 @@ async function testBountyAddFunds() {
       counterparty: 'self',
       forSelf: true
     })
+
 
     const repoOwnerPublicKey = PubKey(bsv.PublicKey.fromString(repoOwnerPublicKeyHex).toByteString())
 
@@ -132,8 +133,6 @@ async function testBountyAddFunds() {
 
     console.log("Contract repoOwnerPublicKey", repoOwnerPublicKey)
 
-    debugger
-
 
     const unlockingScript = await existingBounty.getUnlockingScript(
       async (self: BountyContract) => {
@@ -176,15 +175,6 @@ async function testBountyAddFunds() {
           data: Array.from(hashbuf)
         })
 
-        /*
-        const verifyResult = await anyoneWallet.verifySignature({
-          protocolID: [0, 'bounty'],
-          keyID: '1',
-          counterparty: 'self',
-          data: Array.from(hashbuf),
-          signature: SDKSignature
-        })
-          */
 
         const signature = bsv.crypto.Signature.fromString(Buffer.from(SDKSignature).toString('hex'))
         signature.nhashtype = hashType
@@ -200,6 +190,7 @@ async function testBountyAddFunds() {
     )
 
     console.log('Unlocking Scriptttt:', unlockingScript)
+
 
     const { tx: addTX, txid: addTXID } = await walletClient.createAction({
       inputBEEF: Utils.toArray(tx, 'base64'),
@@ -218,7 +209,7 @@ async function testBountyAddFunds() {
         }
       ],
       description: `Adding ${additionalFunds} satoshis to bounty, new total: ${newTotalFunds}`,
-      options: { acceptDelayedBroadcast: true, randomizeOutputs: false}
+      options: {randomizeOutputs: false}
     })
 
 
@@ -257,6 +248,7 @@ async function testBountyAddFunds() {
     throw error
   }
 }
+
 
 // Run the test
 testBountyAddFunds()
