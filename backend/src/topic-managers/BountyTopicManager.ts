@@ -35,8 +35,10 @@ export default class BountyTopicManager implements TopicManager {
         try {
           // Using pushdrop to decode the script
           //const decodedScript = PushDrop.decode(output.lockingScript)
-
           const bounty = BountyContract.fromLockingScript(output.lockingScript.toHex()) as BountyContract
+
+          console.log('BOUNTYYY:', bounty)
+          
 
           // Verify repo owner signature
           /*

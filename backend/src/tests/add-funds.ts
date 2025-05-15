@@ -1,5 +1,5 @@
 // backend/tests/test-bounty-add-funds.ts
-import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet, ECDSA, Signature, LockingScript, Script, WalletInterface} from '@bsv/sdk'
+import { WalletClient, TopicBroadcaster, Transaction, Utils, ProtoWallet, ECDSA, Signature, LockingScript, Script, WalletInterface, SHIPBroadcaster} from '@bsv/sdk'
 import TransactionSignature from '@bsv/sdk/primitives/TransactionSignature'
 import UnlockingScript from '@bsv/sdk/script/UnlockingScript'
 import bountyContractJson from '../../artifacts/BountyContract.json' with { type: 'json' }
@@ -85,7 +85,7 @@ async function testBountyAddFunds() {
     
     // Broadcast the transaction to the topic manager
     const broadcaster = new TopicBroadcaster(['tm_bounty'], { networkPreset: 'local' })
-    let broadcasterResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx))
+    let broadcasterResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF(tx as number[]))
     
     if (broadcasterResult.status === 'error') {
       throw new Error(`Transaction failed to broadcast: ${broadcasterResult.description}`)
@@ -132,17 +132,19 @@ async function testBountyAddFunds() {
 
     console.log("Contract repoOwnerPublicKey", repoOwnerPublicKey)
 
+    debugger
+
+
     const unlockingScript = await existingBounty.getUnlockingScript(
       async (self: BountyContract) => {
-        // Create the spending transaction
-
         debugger
+        // Create the spending transaction
         const bsvtx = new bsv.Transaction()
         bsvtx.from({
           txId: parsedFromTx.id('hex'),
-          outputIndex: index,
-          script: bountyScript.toHex(),
-          satoshis: initialFunding
+          outputIndex: 0,
+          script: parsedFromTx.outputs[0].lockingScript.toHex(),
+          satoshis: parsedFromTx.outputs[0].satoshis!
         })
         
         // Add output with increased satoshi value
@@ -157,20 +159,32 @@ async function testBountyAddFunds() {
           bsv.crypto.Signature.SIGHASH_ALL |
           bsv.crypto.Signature.SIGHASH_FORKID
 
-        const hashBuf = bsv.crypto.Hash.sha256(bsv.Transaction.Sighash.sighashPreimage(
+        const preimage = bsv.Transaction.Sighash.sighashPreimage(
           bsvtx,
           hashType,
           0,
-          bsv.Script.fromBuffer(Buffer.from(bountyScript.toHex(), 'hex')),
-          new bsv.crypto.BN(initialFunding)))
+          bsv.Script.fromBuffer(Buffer.from(parsedFromTx.outputs[0].lockingScript.toHex()!, 'hex')),
+          new bsv.crypto.BN(parsedFromTx.outputs[0].satoshis!))
+
+        const hashbuf = bsv.crypto.Hash.sha256(preimage)
         
 
         const { signature: SDKSignature } = await walletClient.createSignature({
           protocolID: [0, 'bounty'],
           keyID: '1',
           counterparty: 'self',
-          data: Array.from(hashBuf)
+          data: Array.from(hashbuf)
         })
+
+        /*
+        const verifyResult = await anyoneWallet.verifySignature({
+          protocolID: [0, 'bounty'],
+          keyID: '1',
+          counterparty: 'self',
+          data: Array.from(hashbuf),
+          signature: SDKSignature
+        })
+          */
 
         const signature = bsv.crypto.Signature.fromString(Buffer.from(SDKSignature).toString('hex'))
         signature.nhashtype = hashType
@@ -178,20 +192,21 @@ async function testBountyAddFunds() {
 
         // Set transaction context for the smart contract call
         self.to = { tx: bsvtx, inputIndex: 0 }
-        self.from = { tx: new bsv.Transaction(parsedFromTx.toHex()), outputIndex: index }
+        self.from = { tx: new bsv.Transaction(parsedFromTx.toHex()), outputIndex: 0 }
         
         // Call the addFunds method with explicit amount parameter
         await self.addFunds(Sig(toByteString(signatureHex)), additionalFunds)
       }
     )
-    
-    // Prepare and send the transaction
-    const {tx: addTX, txid: addTXID} = await walletClient.createAction({
+
+    console.log('Unlocking Scriptttt:', unlockingScript)
+
+    const { tx: addTX, txid: addTXID } = await walletClient.createAction({
       inputBEEF: Utils.toArray(tx, 'base64'),
       inputs: [
         {
           outpoint: `${parsedFromTx.id('hex')}.0`,
-          unlockingScript: unlockingScript.toHex(),
+          unlockingScript: unlockingScript.toHex(), // Set Unlocking Script Length 
           inputDescription: 'Add funds to bounty contract',
         }
       ],
@@ -203,24 +218,27 @@ async function testBountyAddFunds() {
         }
       ],
       description: `Adding ${additionalFunds} satoshis to bounty, new total: ${newTotalFunds}`,
-      options: { acceptDelayedBroadcast: true, randomizeOutputs: false }
+      options: { acceptDelayedBroadcast: true, randomizeOutputs: false}
     })
-    
+
+
+
+    console.log('ADD TXID:', addTXID)
+    console.log('ADD TX!!!!:', Transaction.fromAtomicBEEF(addTX!))
+
+    // Prepare and send the transaction
+
     if (!addTX) {
       throw new Error('Transaction is undefined after adding funds')
     }
     
-    // Broadcast the addFunds transaction
-    const addFundsTx = Transaction.fromAtomicBEEF(addTX)
-    const addFundsTxid = addFundsTx.id('hex')
-    
-    broadcasterResult = await broadcaster.broadcast(addFundsTx)
+    broadcasterResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF(addTX as number[]))
     
     if (broadcasterResult.status === 'error') {
       throw new Error(`addFunds transaction failed to broadcast: ${broadcasterResult.description}`)
     }
     
-    console.log(`Successfully added funds to bounty. New txid: ${addFundsTxid}`)
+    console.log(`Successfully added funds to bounty. New txid: ${addTXID}`)
     console.log(`Added amount: ${additionalFunds} satoshis`)
     console.log(`New total balance: ${newTotalFunds} satoshis`)
     
@@ -228,7 +246,7 @@ async function testBountyAddFunds() {
     debugger
     return {
       createTxid: txid,
-      addFundsTxid: addFundsTxid,
+      addFundsTxid: addTXID,
       initialFunding,
       additionalFunds: Number(additionalFunds),
       newTotalFunds
