@@ -58,14 +58,12 @@ export class BountyContract extends SmartContract {
     @method(SigHash.ALL)
     public addFunds(sig: Sig, amount: bigint) {
         // Verify the repo owner signed this
-        debugger
         assert(this.checkSig(sig, this.repoOwnerKey), 'Only repo owner can add funds')
 
         // New contract output must match updated balance
         const newBalance = this.ctx.utxo.value + amount  // The input UTXO (contract)
         const outputs = this.buildStateOutput(newBalance)
 
-        debugger
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
     }
 

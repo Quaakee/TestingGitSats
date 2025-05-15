@@ -133,10 +133,36 @@ async function testBountyAddFunds() {
 
     console.log("Contract repoOwnerPublicKey", repoOwnerPublicKey)
 
+    const { signableTransaction } = await walletClient.createAction({
+      inputBEEF: Utils.toArray(tx, 'base64'),
+      inputs: [
+        {
+          outpoint: `${parsedFromTx.id('hex')}.0`,
+          unlockingScriptLength: 18000, // Set Unlocking Script Length 
+          inputDescription: 'Add funds to bounty contract',
+        }
+      ],
+      outputs: [
+        {
+          lockingScript: bountyScript.toHex(), // Same locking script since state doesn't change
+          satoshis: newTotalFunds, // The new total amount with added funds
+          outputDescription: 'Updated Bounty Contract with more funds'
+        }
+      ],
+      description: `Adding ${additionalFunds} satoshis to bounty, new total: ${newTotalFunds}`,
+      options: {randomizeOutputs: false, acceptDelayedBroadcast: false}
+    })
+
+    if(!signableTransaction) throw new Error('This transaction is not signable!')
+
+    const partialTX = Transaction.fromAtomicBEEF(signableTransaction.tx)
+    let txSignature: TransactionSignature | undefined
+
+    console.log('PARTIAL TRANSACTION!!!:', partialTX)
+
 
     const unlockingScript = await existingBounty.getUnlockingScript(
       async (self: BountyContract) => {
-        debugger
         // Create the spending transaction
         const bsvtx = new bsv.Transaction()
         bsvtx.from({
@@ -174,8 +200,12 @@ async function testBountyAddFunds() {
           counterparty: 'self',
           data: Array.from(hashbuf)
         })
-
-
+        const sigDER = Signature.fromDER([...SDKSignature])
+        txSignature = new TransactionSignature(
+          sigDER.r,
+          sigDER.s,
+          hashType
+        )
         const signature = bsv.crypto.Signature.fromString(Buffer.from(SDKSignature).toString('hex'))
         signature.nhashtype = hashType
         const signatureHex = signature.toTxFormat().toString('hex')
@@ -189,47 +219,43 @@ async function testBountyAddFunds() {
       }
     )
 
+    debugger
+    if(!txSignature) throw new Error('txSignature is undefined!!')
+    const sigForCheckSig = txSignature.toChecksigFormat()
+    const unlockingSign = new UnlockingScript([
+      {
+        op: sigForCheckSig.length, data:sigForCheckSig
+      }
+    ])
+
+    const action = await walletClient.signAction({
+      reference: signableTransaction.reference,
+      spends: {
+        0: {
+          unlockingScript: unlockingSign.toHex()
+        }
+      }
+    })
+
     console.log('Unlocking Scriptttt:', unlockingScript)
 
 
-    const { tx: addTX, txid: addTXID } = await walletClient.createAction({
-      inputBEEF: Utils.toArray(tx, 'base64'),
-      inputs: [
-        {
-          outpoint: `${parsedFromTx.id('hex')}.0`,
-          unlockingScript: unlockingScript.toHex(), // Set Unlocking Script Length 
-          inputDescription: 'Add funds to bounty contract',
-        }
-      ],
-      outputs: [
-        {
-          lockingScript: lockingScript, // Same locking script since state doesn't change
-          satoshis: newTotalFunds, // The new total amount with added funds
-          outputDescription: 'Updated Bounty Contract with more funds'
-        }
-      ],
-      description: `Adding ${additionalFunds} satoshis to bounty, new total: ${newTotalFunds}`,
-      options: {randomizeOutputs: false}
-    })
-
-
-
-    console.log('ADD TXID:', addTXID)
-    console.log('ADD TX!!!!:', Transaction.fromAtomicBEEF(addTX!))
+    console.log('ADD TXID:', (action).txid)
+    console.log('ADD TX!!!!:', Transaction.fromAtomicBEEF((action).tx!))
 
     // Prepare and send the transaction
 
-    if (!addTX) {
+    if (!(await action).tx) {
       throw new Error('Transaction is undefined after adding funds')
     }
     
-    broadcasterResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF(addTX as number[]))
+    broadcasterResult = await broadcaster.broadcast(Transaction.fromAtomicBEEF((action).tx as number[]))
     
     if (broadcasterResult.status === 'error') {
       throw new Error(`addFunds transaction failed to broadcast: ${broadcasterResult.description}`)
     }
     
-    console.log(`Successfully added funds to bounty. New txid: ${addTXID}`)
+    console.log(`Successfully added funds to bounty. New txid: ${(await action).txid}`)
     console.log(`Added amount: ${additionalFunds} satoshis`)
     console.log(`New total balance: ${newTotalFunds} satoshis`)
     
@@ -237,7 +263,7 @@ async function testBountyAddFunds() {
     debugger
     return {
       createTxid: txid,
-      addFundsTxid: addTXID,
+      addFundsTxid: action.txid,
       initialFunding,
       additionalFunds: Number(additionalFunds),
       newTotalFunds
