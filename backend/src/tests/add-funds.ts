@@ -127,10 +127,6 @@ async function testBountyAddFunds() {
 
     console.log(parsedFromTx.outputs)
 
-    const existingBounty: BountyContract = BountyContract.fromLockingScript(
-      bountyScript.toHex()
-    ) as BountyContract
-
     console.log("Contract repoOwnerPublicKey", repoOwnerPublicKey)
 
     const { signableTransaction } = await walletClient.createAction({
@@ -156,10 +152,20 @@ async function testBountyAddFunds() {
     if(!signableTransaction) throw new Error('This transaction is not signable!')
 
     const partialTX = Transaction.fromAtomicBEEF(signableTransaction.tx)
-    let txSignature: TransactionSignature | undefined
 
     console.log('PARTIAL TRANSACTION!!!:', partialTX)
 
+    const existingBounty: BountyContract = BountyContract.fromLockingScript(
+      bountyScript.toHex()
+    ) as BountyContract
+
+    const mockBounty: BountyContract = BountyContract.fromLockingScript(
+      existingBounty.lockingScript.toHex()
+    ) as BountyContract
+
+    mockBounty.transitionBalance(BigInt(newTotalFunds))
+
+    const nextOutputScript = mockBounty.lockingScript
 
     const unlockingScript = await existingBounty.getUnlockingScript(
       async (self: BountyContract) => {
@@ -175,7 +181,7 @@ async function testBountyAddFunds() {
         // Add output with increased satoshi value
         bsvtx.addOutput(
           new bsv.Transaction.Output({
-            script: bounty.lockingScript, // Same locking script since contract state doesn't change
+            script: nextOutputScript, // Different locking script since contract state doesn't change
             satoshis: newTotalFunds // The new total with added funds
           })
         )
@@ -193,19 +199,13 @@ async function testBountyAddFunds() {
 
         const hashbuf = bsv.crypto.Hash.sha256(preimage)
         
-
         const { signature: SDKSignature } = await walletClient.createSignature({
           protocolID: [0, 'bounty'],
           keyID: '1',
           counterparty: 'self',
           data: Array.from(hashbuf)
         })
-        const sigDER = Signature.fromDER([...SDKSignature])
-        txSignature = new TransactionSignature(
-          sigDER.r,
-          sigDER.s,
-          hashType
-        )
+
         const signature = bsv.crypto.Signature.fromString(Buffer.from(SDKSignature).toString('hex'))
         signature.nhashtype = hashType
         const signatureHex = signature.toTxFormat().toString('hex')
@@ -220,19 +220,12 @@ async function testBountyAddFunds() {
     )
 
     debugger
-    if(!txSignature) throw new Error('txSignature is undefined!!')
-    const sigForCheckSig = txSignature.toChecksigFormat()
-    const unlockingSign = new UnlockingScript([
-      {
-        op: sigForCheckSig.length, data:sigForCheckSig
-      }
-    ])
 
     const action = await walletClient.signAction({
       reference: signableTransaction.reference,
       spends: {
         0: {
-          unlockingScript: unlockingSign.toHex()
+          unlockingScript: unlockingScript.toHex()
         }
       }
     })

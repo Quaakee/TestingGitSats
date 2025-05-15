@@ -51,6 +51,10 @@ contract BountyContract {
     outputs += this.buildChangeOutput();
     require(hash256(outputs) == this.__scrypt_ts_ctx_hashoutputs);
   }
+  function transitionBalance(int amount) : bool {
+    this.buildStateOutput(amount);
+    return true;
+  }
   function buildStateOutput(int amount) : bytes {  return Utils.buildOutput(this.getStateScript(), amount);}
   function buildChangeOutput() : bytes {  return this.__scrypt_ts_change.amount > 0 ? Utils.buildOutput(Utils.buildPublicKeyHashScript(this.__scrypt_ts_change.address), this.__scrypt_ts_change.amount) : b'';}
 }

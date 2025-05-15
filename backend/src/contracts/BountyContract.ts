@@ -58,6 +58,7 @@ export class BountyContract extends SmartContract {
     @method(SigHash.ALL)
     public addFunds(sig: Sig, amount: bigint) {
         // Verify the repo owner signed this
+
         assert(this.checkSig(sig, this.repoOwnerKey), 'Only repo owner can add funds')
 
         // New contract output must match updated balance
@@ -65,6 +66,7 @@ export class BountyContract extends SmartContract {
         const outputs = this.buildStateOutput(newBalance)
 
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
+
     }
 
     /**
@@ -119,5 +121,10 @@ export class BountyContract extends SmartContract {
         outputs += this.buildChangeOutput()
 
         assert(hash256(outputs) == this.ctx.hashOutputs, 'hashOutputs mismatch')
+    }
+
+    @method()
+    transitionBalance(amount: bigint): void {
+        this.buildStateOutput(amount)
     }
 }

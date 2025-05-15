@@ -34,7 +34,8 @@
         "test-contract": "node dist/esm/src/tests/test-contract.js",
         "query-contract": "node dist/esm/src/tests/query-contract.js",
         "test-function": "node dist/esm/src/tests/test-bounty-function.js",
-        "add-funds": "node dist/esm/src/tests/add-funds.js"
+        "add-funds": "node dist/esm/src/tests/add-funds.js",
+        "add-funds2": "node dist/esm/src/tests/add-funds2.js"
     },
     "keywords": [
         "github",
