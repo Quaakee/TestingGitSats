@@ -1,0 +1,7 @@
+1) Convert this project from webpack to vite. Do this to make work easier. Follow template from Babbage Escrow UI
+        a) Either build in new directory, or refactor this code. Whichever seems faster.
+        b) Make sure the project actually builds using vite and the polyfills are ok.
+        c) 
+2) Change all 'Bounty' Functions from using the redacted BountyContract to implement babbage-escrow.
+3) MAKE SURE IT BUILDS AFTER THIS.
+4) 

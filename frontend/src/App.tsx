@@ -22,7 +22,6 @@ import ProfilePage from './pages/ProfilePage';
 import BountyExplorerPage from './pages/BountyExplorerPage';
 
 // Import services
-import { lookupResolver, lookupServices } from './utils/constants';
 import { bountyService } from './services/BountyService';
 
 interface ProtectedRouteProps {
@@ -73,7 +72,7 @@ const AppRoutes: React.FC = () => {
     const initializeLookupService = async () => {
       try {
         // Test connection to lookup service
-        const bounties = await bountyService.getAllBounties();
+        const bounties = await bountyService.getAllBounties(); // TODO: CHANGE TO BABBAGE ESCROW IMPLEMENTATION
         console.log('Successfully connected to bounty lookup service, found', bounties.length, 'bounties');
       } catch (err) {
         console.error('Error connecting to bounty lookup service:', err);

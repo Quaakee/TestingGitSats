@@ -117,15 +117,7 @@ async function testBountyAddFunds() {
     // Parsed Bounty TX returns transaction
     const parsedFromTx = Transaction.fromAtomicBEEF(Utils.toArray(tx, 'base64'))
 
-    let index = 0
     let bountyScript = parsedFromTx.outputs[0].lockingScript
-
-    if(parsedFromTx.outputs[0].satoshis !== Number(1000)) {
-      bountyScript = parsedFromTx.outputs[1].lockingScript
-      index = 1
-    }
-
-    console.log(parsedFromTx.outputs)
 
     console.log("Contract repoOwnerPublicKey", repoOwnerPublicKey)
 
@@ -153,8 +145,6 @@ async function testBountyAddFunds() {
 
     const partialTX = Transaction.fromAtomicBEEF(signableTransaction.tx)
 
-    console.log('PARTIAL TRANSACTION!!!:', partialTX)
-
     const existingBounty: BountyContract = BountyContract.fromLockingScript(
       bountyScript.toHex()
     ) as BountyContract
@@ -170,11 +160,12 @@ async function testBountyAddFunds() {
     const unlockingScript = await existingBounty.getUnlockingScript(
       async (self: BountyContract) => {
         // Create the spending transaction
+        debugger
         const bsvtx = new bsv.Transaction()
         bsvtx.from({
           txId: parsedFromTx.id('hex'),
           outputIndex: 0,
-          script: parsedFromTx.outputs[0].lockingScript.toHex(),
+          script: bountyScript.toHex(),
           satoshis: parsedFromTx.outputs[0].satoshis!
         })
         
@@ -187,8 +178,12 @@ async function testBountyAddFunds() {
         )
 
         const hashType =
-          bsv.crypto.Signature.SIGHASH_ALL |
-          bsv.crypto.Signature.SIGHASH_FORKID
+          bsv.crypto.Signature.SIGHASH_ANYONECANPAY |
+          bsv.crypto.Signature.SIGHASH_FORKID |
+          bsv.crypto.Signature.SIGHASH_SINGLE
+        
+        console.log('Inputs included in preimage:', bsvtx.inputs)
+        console.log('Outputs included in preimage:', bsvtx.outputs)
 
         const preimage = bsv.Transaction.Sighash.sighashPreimage(
           bsvtx,
@@ -196,6 +191,11 @@ async function testBountyAddFunds() {
           0,
           bsv.Script.fromBuffer(Buffer.from(parsedFromTx.outputs[0].lockingScript.toHex()!, 'hex')),
           new bsv.crypto.BN(parsedFromTx.outputs[0].satoshis!))
+        
+        console.log('PARTIAL TX INPUTS:', partialTX.inputs)
+        console.log('PARTIAL TX OUTPUTS:', partialTX.outputs)
+        console.log('Original transaction inputs:', parsedFromTx.inputs)
+        console.log('Original transaction outputs:', parsedFromTx.outputs)
 
         const hashbuf = bsv.crypto.Hash.sha256(preimage)
         
@@ -213,7 +213,7 @@ async function testBountyAddFunds() {
         // Set transaction context for the smart contract call
         self.to = { tx: bsvtx, inputIndex: 0 }
         self.from = { tx: new bsv.Transaction(parsedFromTx.toHex()), outputIndex: 0 }
-        
+
         // Call the addFunds method with explicit amount parameter
         await self.addFunds(Sig(toByteString(signatureHex)), additionalFunds)
       }
